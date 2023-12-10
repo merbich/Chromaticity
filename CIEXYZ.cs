@@ -15,6 +15,10 @@ namespace Chromaticity
         public CIEXYZ()
         {
             InitializeComponent();
+
+            Logic.ChromaticPic = this.chromaticPicBox;
+            Logic.BezierPic = this.BezierPictureBox;
+            Logic.Init();
         }
 
     }
