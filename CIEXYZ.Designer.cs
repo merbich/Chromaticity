@@ -50,6 +50,9 @@ namespace Chromaticity
             this.BezierPictureBox.Size = new System.Drawing.Size(500, 500);
             this.BezierPictureBox.TabIndex = 1;
             this.BezierPictureBox.TabStop = false;
+            this.BezierPictureBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.BezierPictureBox_MouseDown);
+            this.BezierPictureBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.BezierPictureBox_MouseMove);
+            this.BezierPictureBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.BezierPictureBox_MouseUp);
             // 
             // CIEXYZ
             // 

@@ -21,5 +21,38 @@ namespace Chromaticity
             Logic.Init();
         }
 
+        private void BezierPictureBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            for(int i = 0; i<Logic.ControlPoints.Length; i++)
+            { 
+                if(Logic.IsPointNearCursor(Logic.ControlPoints[i], e.Location))
+                {
+                    Logic.CurrentPoint = i;
+                    Logic.IsPointMove = true;
+                }
+            }
+        }
+
+        private void BezierPictureBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (Logic.IsPointMove)
+            {
+                // move control points
+                Point cursor = e.Location;
+                Logic.MoveControlPoint(cursor);
+                // draw new control points
+                Logic.DrawControlPoints();
+                //calculate bezier curve
+                Logic.DrawBezierCurve();
+                //calculate color
+                Logic.ComputeXYZandConvert();
+            }
+        }
+
+        private void BezierPictureBox_MouseUp(object sender, MouseEventArgs e)
+        {
+            Logic.CurrentPoint = -1;
+            Logic.IsPointMove = false;
+        }
     }
 }
