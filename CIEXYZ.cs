@@ -19,6 +19,8 @@ namespace Chromaticity
             Logic.ChromaticPic = this.chromaticPicBox;
             Logic.BezierPic = this.BezierPictureBox;
             Logic.Init();
+
+            //ColorPointsCheckBox.Checked = true;
         }
 
         private void BezierPictureBox_MouseDown(object sender, MouseEventArgs e)
@@ -53,6 +55,20 @@ namespace Chromaticity
         {
             Logic.CurrentPoint = -1;
             Logic.IsPointMove = false;
+        }
+
+        private void ColorPointsCheckBox_CheckStateChanged(object sender, EventArgs e)
+        {
+            if(ColorPointsCheckBox.Checked)
+            {
+                Logic.IsColorPoints = true;
+                Logic.DrawC();
+            }
+            else
+            {
+                Logic.IsColorPoints = false;
+                Logic.DrawC();
+            }
         }
     }
 }

@@ -15,20 +15,24 @@ namespace Chromaticity
         public static PictureBox BezierPic;
         public static DirectBitmap ChromaticBitmap;
         public static DirectBitmap BezierBitmap;
-        //public static Bitmap ChromaticBitmap;
         public static Graphics gC;
         public static Graphics gB;
 
         public static double[,] waves;
         public static PointF[] ControlPoints; // 5
         public static PointF[] CurveYLocations;
+        public static (Point, Color)[] ChromaticBoundary;
+
         public static int CurrentPoint = -1;
         public static bool IsPointMove = false;
+        public static bool IsColorPoints = false;
         public static int margin = 30;
+        public static float k = 0;
 
         #region Init
         public static void Init()
         {
+            ChromaticBoundary = new (Point, Color)[401];
             CurveYLocations = new PointF[401];
             ControlPoints = new PointF[5];
             ControlPoints[0] = new PointF(0f, 0.5f);
@@ -37,20 +41,30 @@ namespace Chromaticity
             ControlPoints[3] = new PointF(0.75f, 0.5f);
             ControlPoints[4] = new PointF(1f, 0.5f);
 
-            Image j = Image.FromFile("C:/Users/user/Desktop/sem5/GrafikaKomputerowa/Chromaticity/Chromaticity/hziJw.png");
-            ChromaticBitmap = new DirectBitmap(new Bitmap(j, new Size(ChromaticPic.Width, ChromaticPic.Height)));
+            //Image j = Image.FromFile("C:/Users/user/Desktop/sem5/GrafikaKomputerowa/Chromaticity/Chromaticity/hziJw.png");
+            ChromaticBitmap = new DirectBitmap(ChromaticPic.Width, ChromaticPic.Height);
             BezierBitmap = new DirectBitmap(BezierPic.Width, BezierPic.Height);
             //ChromaticBitmap = new DirectBitmap(ChromaticPic.Width, ChromaticPic.Height);
 
             gC = Graphics.FromImage(ChromaticBitmap.Bitmap);
             ChromaticPic.Image = ChromaticBitmap.Bitmap;
-
+            //gC = ChromaticPic.CreateGraphics();
             gB = Graphics.FromImage(BezierBitmap.Bitmap);
             BezierPic.Image = BezierBitmap.Bitmap;
-
+            //gB = BezierPic.CreateGraphics();
             ReadFromTXT();
-            DrawChromaticBoundary();
-            DrawAxes();
+
+            //gC.Clear(Color.White);
+            //Bitmap backgroundBitmap = new(new Bitmap(@"C:\Users\user\Desktop\sem5\GrafikaKomputerowa\Chromaticity\Chromaticity\hziJw.png"),
+            //        (int)(0.9 * ChromaticPic.Width - margin),
+            //        (int)(0.9 * ChromaticPic.Width - margin));
+            //gC.DrawImage(backgroundBitmap, new Point(margin-10, ChromaticPic.Height - backgroundBitmap.Height - margin));
+
+            CalculateChromaticBoundary();
+            //DrawChromaticBoundary();
+            //DrawAxes();
+            DrawC();
+
             DrawControlPoints();
             DrawBezierCurve();
         }
@@ -80,6 +94,8 @@ namespace Chromaticity
                         waves[index, 2] = Y;
                         waves[index, 3] = Z;
 
+                        k += (float)Y;
+
                         index++;
                     }
                 }
@@ -89,7 +105,7 @@ namespace Chromaticity
                 throw new Exception("TXT file not found");
             }
         }
-        public static void DrawChromaticBoundary()
+        public static void CalculateChromaticBoundary()
         {
             for(int i = 0; i<401; i++)
             {
@@ -97,10 +113,17 @@ namespace Chromaticity
                 double Y = waves[i, 2];
                 double Z = waves[i, 3];
 
-                if (X + Y + Z == 0) continue;
-                double x = X / (X + Y + Z);
-                double y = Y / (X + Y + Z);
-                double z = Z / (X + Y + Z);
+                double x, y;
+                if (X + Y + Z == 0)
+                {
+                    x = 0;
+                    y = 0;
+                }
+                else
+                {
+                    x = X / (X + Y + Z);
+                    y = Y / (X + Y + Z);
+                }
 
                 //if (Y != 0)
                 //{
@@ -109,19 +132,33 @@ namespace Chromaticity
                 //    Z = Z / Y;
                 //}
 
-                double R = 3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z;
-                double G = -0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z;
-                double B = 0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z;
+                int R = Math.Min((int)(255*Math.Pow(Math.Max(3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z, 0), 1/2.2)), 255);
+                int G = Math.Min((int)(255*Math.Pow(Math.Max(-0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z, 0), 1/2.2)), 255);
+                int B = Math.Min((int)(255*Math.Pow(Math.Max(0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z, 0), 1/2.2)), 255);
 
-                R = adj(R);
-                G = adj(G);
-                B = adj(B);
+
+                //R = adj(R);
+                //G = adj(G);
+                //B = adj(B);
 
                 
-                Color color = Color.Black;
-                if (x < 0 || y <= 0) continue;
-                //Color color = Color.FromArgb((int)(R * 255), (int)(G * 255), (int)(B * 255));
-                ChromaticBitmap.SetPixel((int)(x * ChromaticBitmap.Width)+30, (int)(ChromaticBitmap.Height - (y * ChromaticBitmap.Height))-30, color);
+                //Color color = Color.Black;
+                //if (x < 0 || y <= 0) continue;
+                Color color = Color.FromArgb(R, G, B);
+                //gC.FillEllipse(new SolidBrush(color), (int)(x * ChromaticBitmap.Width) + margin-4, (int)(ChromaticBitmap.Height - (y * ChromaticBitmap.Height)) - margin - 4, 8, 8);
+                ChromaticBoundary[i] = (new Point((int)(x * ChromaticBitmap.Width) + margin, (int)(ChromaticBitmap.Height - (y * ChromaticBitmap.Height)) - margin), color);
+                //ChromaticBitmap.SetPixel((int)(x * ChromaticBitmap.Width)+30, (int)(ChromaticBitmap.Height - (y * ChromaticBitmap.Height))-30, color);
+                //ChromaticPic.Refresh();
+            }
+        }
+        public static void DrawChromaticBoundary()
+        {
+            for(int i = 0; i<401; i++)
+            {
+                Point p = ChromaticBoundary[i].Item1;
+                Color c = ChromaticBoundary[i].Item2;
+
+                gC.FillEllipse(new SolidBrush(c), p.X - 4, p.Y - 4, 8, 8);
                 ChromaticPic.Refresh();
             }
         }
@@ -243,17 +280,76 @@ namespace Chromaticity
 
             float x = (float)(newLocation.X - 30) / 400f;
             float y = (float)(BezierBitmap.Height - 30 - newLocation.Y) / 400f;
-            if (x < 0 || x > 1)
+            if(CurrentPoint == 0)
             {
-                ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
-                return;
+                if (x < 0 || x > (5f / 40f))
+                {
+                    ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
+                    return;
+                }
+                if (y < 0 || y > 1)
+                {
+                    ControlPoints[CurrentPoint] = new PointF(x, ControlPoints[CurrentPoint].Y);
+                    return;
+                }
+                ControlPoints[CurrentPoint] = new PointF(x, y);
             }
-            if(y < 0 || y > 1)
+            if(CurrentPoint == 1)
             {
-                ControlPoints[CurrentPoint] = new PointF(x, ControlPoints[CurrentPoint].Y);
-                return;
+                if (x < (51f / 400f) || x > (150f / 400f))
+                {
+                    ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
+                    return;
+                }
+                if (y < 0 || y > 1)
+                {
+                    ControlPoints[CurrentPoint] = new PointF(x, ControlPoints[CurrentPoint].Y);
+                    return;
+                }
+                ControlPoints[CurrentPoint] = new PointF(x, y);
             }
-            ControlPoints[CurrentPoint] = new PointF(x, y);
+            if(CurrentPoint == 2)
+            {
+                if (x < (151f / 400f) || x > (250f / 400f))
+                {
+                    ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
+                    return;
+                }
+                if (y < 0 || y > 1)
+                {
+                    ControlPoints[CurrentPoint] = new PointF(x, ControlPoints[CurrentPoint].Y);
+                    return;
+                }
+                ControlPoints[CurrentPoint] = new PointF(x, y);
+            }
+            if (CurrentPoint == 3)
+            {
+                if (x < (251f / 400f) || x > (350f / 400f))
+                {
+                    ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
+                    return;
+                }
+                if (y < 0 || y > 1)
+                {
+                    ControlPoints[CurrentPoint] = new PointF(x, ControlPoints[CurrentPoint].Y);
+                    return;
+                }
+                ControlPoints[CurrentPoint] = new PointF(x, y);
+            }
+            if (CurrentPoint == 4)
+            {
+                if (x < (351f / 400f) || x > 1)
+                {
+                    ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
+                    return;
+                }
+                if (y < 0 || y > 1)
+                {
+                    ControlPoints[CurrentPoint] = new PointF(x, ControlPoints[CurrentPoint].Y);
+                    return;
+                }
+                ControlPoints[CurrentPoint] = new PointF(x, y);
+            }
         }
         public static double ComputeB(int i, int n, float t)
         {
@@ -299,52 +395,75 @@ namespace Chromaticity
         public static void ComputeXYZandConvert()
         {
             float X = 0, Y = 0, Z = 0;
-            for(int i = 0; i<401; i++) 
+            for (int i = 0; i < 401; i++)
             {
                 PointF point = CurveYLocations[i];
                 // converting to 0-1.8
                 float lambdaP = point.Y * 1.8f;
-                X += lambdaP * (float)waves[i, 1];
-                Y += lambdaP * (float)waves[i, 2];
-                Z += lambdaP * (float)waves[i, 3];
+                float lambda = point.X;
+                X += lambdaP * (float)waves[i, 1] * lambda;
+                Y += lambdaP * (float)waves[i, 2] * lambda;
+                Z += lambdaP * (float)waves[i, 3] * lambda;
             }
 
-            //if (Y != 0)
-            //{
-            //    X = X / Y;
-            //    Y = Y / Y;
-            //    Z = Z / Y;
-            //}
+            //X *= k;
+            //Y *= k;
+            //Z *= k;
 
-            float R = 3.2404542f * X - 1.5371385f * Y - 0.4985314f * Z;
-            float G = -0.9692660f * X + 1.8760108f * Y + 0.0415560f * Z;
-            float B = 0.0556434f * X - 0.2040259f * Y + 1.0572252f * Z;
+            int R = Math.Min((int)(255 * Math.Pow(Math.Max(3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z, 0), 1 / 2.2)), 255);
+            int G = Math.Min((int)(255 * Math.Pow(Math.Max(-0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z, 0), 1 / 2.2)), 255);
+            int B = Math.Min((int)(255 * Math.Pow(Math.Max(0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z, 0), 1 / 2.2)), 255);
 
-            R = adj(R);
-            G = adj(G);
-            B = adj(B);
+            //double R = 3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z;
+            //double G = -0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z;
+            //double B = 0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z;
 
+            //R = adj(R);
+            //G = adj(G);
+            //B = adj(B);
+
+            Color color = Color.FromArgb(R, G, B);
             PutPoint(X, Y, Z);
-
-            Color color = Color.FromArgb((int)R, (int)G, (int)B);
-
             gC.FillRectangle(new SolidBrush(color), 450, 0, 50, 50);
+            
             ChromaticPic.Refresh();
         }
         public static void PutPoint(float X, float Y, float Z)
         {
-            float x = X / (X + Y + Z);
-            float y = Y / (X + Y + Z);
+            float x, y;
+            if(X+Y+Z == 0)
+            {
+                x = 0;
+                y = 0;
+            }
+            else
+            {
+                x = X / (X + Y + Z);
+                y = Y / (X + Y + Z);
+            }
+            
 
             x = x * 400 + 30;
             y = BezierBitmap.Height - (y * 400) - 30;
 
-            gC.Clear(Color.White);
-            DrawAxes();
-            DrawChromaticBoundary();
+            DrawC();
             gC.FillEllipse(Brushes.Red, (int)(x - 4), (int)(y - 4), 8, 8);
 
+            gC.DrawString("x: " + x.ToString("0.0"), new Font("Arial", 8), Brushes.Black, new PointF(400, 10));
+            gC.DrawString("y: " + y.ToString("0.0"), new Font("Arial", 8), Brushes.Black, new PointF(400, 25));
+        }
+        public static void DrawC()
+        {
+            gC.Clear(Color.White);
+            Bitmap backgroundBitmap = new(new Bitmap(@"C:\Users\user\Desktop\sem5\GrafikaKomputerowa\Chromaticity\Chromaticity\hziJw.png"),
+                    (int)(0.9 * ChromaticPic.Width - margin),
+                    (int)(0.9 * ChromaticPic.Width - margin));
+            gC.DrawImage(backgroundBitmap, new Point(margin - 10, ChromaticPic.Height - backgroundBitmap.Height - margin));
+            DrawAxes();
+            if (IsColorPoints) DrawChromaticBoundary();
+            ChromaticPic.Refresh();
         }
         #endregion
     }
+    
 }

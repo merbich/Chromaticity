@@ -31,6 +31,7 @@ namespace Chromaticity
         {
             this.chromaticPicBox = new System.Windows.Forms.PictureBox();
             this.BezierPictureBox = new System.Windows.Forms.PictureBox();
+            this.ColorPointsCheckBox = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.chromaticPicBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.BezierPictureBox)).BeginInit();
             this.SuspendLayout();
@@ -54,11 +55,23 @@ namespace Chromaticity
             this.BezierPictureBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.BezierPictureBox_MouseMove);
             this.BezierPictureBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.BezierPictureBox_MouseUp);
             // 
+            // ColorPointsCheckBox
+            // 
+            this.ColorPointsCheckBox.AutoSize = true;
+            this.ColorPointsCheckBox.Location = new System.Drawing.Point(972, 26);
+            this.ColorPointsCheckBox.Name = "ColorPointsCheckBox";
+            this.ColorPointsCheckBox.Size = new System.Drawing.Size(149, 24);
+            this.ColorPointsCheckBox.TabIndex = 2;
+            this.ColorPointsCheckBox.Text = "Draw color points";
+            this.ColorPointsCheckBox.UseVisualStyleBackColor = true;
+            this.ColorPointsCheckBox.CheckStateChanged += new System.EventHandler(this.ColorPointsCheckBox_CheckStateChanged);
+            // 
             // CIEXYZ
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1182, 653);
+            this.Controls.Add(this.ColorPointsCheckBox);
             this.Controls.Add(this.BezierPictureBox);
             this.Controls.Add(this.chromaticPicBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -68,6 +81,7 @@ namespace Chromaticity
             ((System.ComponentModel.ISupportInitialize)(this.chromaticPicBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.BezierPictureBox)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -75,6 +89,7 @@ namespace Chromaticity
 
         private System.Windows.Forms.PictureBox chromaticPicBox;
         private System.Windows.Forms.PictureBox BezierPictureBox;
+        private System.Windows.Forms.CheckBox ColorPointsCheckBox;
     }
 }
 
