@@ -9,6 +9,12 @@ using System.Windows.Forms;
 
 namespace Chromaticity
 {
+    public enum ColorModel
+    {
+        sRGB,
+        WideGamut,
+        CIERGB
+    }
     public static class Logic
     {
         public static PictureBox ChromaticPic;
@@ -30,6 +36,7 @@ namespace Chromaticity
         public static bool alert = false;
         public static int margin = 30;
         public static float k = 0;
+        public static ColorModel colorModel;
 
         #region Init
         public static void Init()
@@ -141,7 +148,7 @@ namespace Chromaticity
             Font customFont = new Font("Arial", 6);
             using (Graphics g = Graphics.FromImage(BezierBitmap.Bitmap))
             {
-                g.Clear(Color.White);
+                //g.Clear(Color.White);
 
                 float xScale = 400 / (780f - 380f);
                 float yScale = 400 / (1.8f);
@@ -391,15 +398,57 @@ namespace Chromaticity
             Y *= k;
             Z *= k;
 
+            //int R, G, B;
+
+            //int R = Math.Min((int)(255 * Math.Pow(Math.Max(3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z, 0), 1 / 2.2)), 255);
+            //int G = Math.Min((int)(255 * Math.Pow(Math.Max(-0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z, 0), 1 / 2.2)), 255);
+            //int B = Math.Min((int)(255 * Math.Pow(Math.Max(0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z, 0), 1 / 2.2)), 255);
+
+            //Color color = Color.FromArgb(R, G, B);
+            Color color = Color.White;
+            if (colorModel == ColorModel.sRGB) color = XYZ2SRGB(X, Y, Z);
+            if (colorModel == ColorModel.WideGamut) color = XYZ2WhiteGammut(X, Y, Z);
+            if (colorModel == ColorModel.CIERGB) color = XYZ2CIERGB(X, Y, Z);
+
+            PutPoint(X, Y, Z);
+            gC.FillRectangle(new SolidBrush(color), 450, 0, 50, 50);
+            
+            ChromaticPic.Refresh();
+        }
+        public static Color XYZ2CIERGB(float X, float Y, float Z)
+        {
+            //2.3706743 - 0.9000405 - 0.4706338
+            //- 0.5138850  1.4253036  0.0885814
+            //0.0052982 - 0.0146949  1.0093968
+            int R = Math.Min((int)(255 * Math.Pow(Math.Max(2.3706743 * X - 0.9000405 * Y - 0.4706338 * Z, 0), 1 / 2.2)), 255);
+            int G = Math.Min((int)(255 * Math.Pow(Math.Max(-0.5138850 * X + 1.4253036 * Y + 0.0885814 * Z, 0), 1 / 2.2)), 255);
+            int B = Math.Min((int)(255 * Math.Pow(Math.Max(0.0052982 * X - 0.0146949 * Y + 1.0093968 * Z, 0), 1 / 2.2)), 255);
+
+            Color color = Color.FromArgb(R, G, B);
+            return color;
+        }
+        public static Color XYZ2SRGB(float X, float Y, float Z)
+        {
             int R = Math.Min((int)(255 * Math.Pow(Math.Max(3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z, 0), 1 / 2.2)), 255);
             int G = Math.Min((int)(255 * Math.Pow(Math.Max(-0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z, 0), 1 / 2.2)), 255);
             int B = Math.Min((int)(255 * Math.Pow(Math.Max(0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z, 0), 1 / 2.2)), 255);
 
             Color color = Color.FromArgb(R, G, B);
-            PutPoint(X, Y, Z);
-            gC.FillRectangle(new SolidBrush(color), 450, 0, 50, 50);
-            
-            ChromaticPic.Refresh();
+            return color;
+        }
+
+        public static Color XYZ2WhiteGammut(float X, float Y, float Z)
+        {
+            //1.4628067 - 0.1840623 - 0.2743606
+            //- 0.5217933  1.4472381  0.0677227
+            //0.0349342 - 0.0968930  1.2884099
+
+            int R = Math.Min((int)(255 * Math.Pow(Math.Max(1.4628067 * X - 0.1840623 * Y - 0.2743606 * Z, 0), 1 / 2.2)), 255);
+            int G = Math.Min((int)(255 * Math.Pow(Math.Max(-0.5217933 * X + 1.4472381 * Y + 0.0677227 * Z, 0), 1 / 2.2)), 255);
+            int B = Math.Min((int)(255 * Math.Pow(Math.Max(0.0349342 * X - 0.0968930 * Y + 1.2884099 * Z, 0), 1 / 2.2)), 255);
+
+            Color color = Color.FromArgb(R, G, B);
+            return color;
         }
         public static void PutPoint(float X, float Y, float Z)
         {
@@ -434,7 +483,59 @@ namespace Chromaticity
             gC.DrawImage(backgroundBitmap, new Point(margin - 10, ChromaticPic.Height - backgroundBitmap.Height - margin));
             DrawAxes();
             if (IsColorPoints) DrawChromaticBoundary();
+            if (colorModel == ColorModel.sRGB) DrawSRGBTriangle();
+            if (colorModel == ColorModel.WideGamut) DrawWideGamutTriangle();
+            if (colorModel == ColorModel.CIERGB) DrawCIERGBTriangle();
+
             ChromaticPic.Refresh();
+        }
+        public static void DrawSRGBTriangle()
+        {
+            double xR = 0.64, yR = 0.33, xG = 0.3, yG = 0.6, xB = 0.15, yB = 0.06;
+            xR = xR * 400 + margin;
+            yR = BezierBitmap.Height - (yR * 400) - margin;
+
+            xG = xG * 400 + margin;
+            yG = BezierBitmap.Height - (yG * 400) - margin;
+
+            xB = xB * 400 + 30;
+            yB = BezierBitmap.Height - (yB * 400) - 30;
+
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xR, (int)yR), new Point((int)xG, (int)yG));
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xR, (int)yR), new Point((int)xB, (int)yB));
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xG, (int)yG), new Point((int)xB, (int)yB));
+        }
+        public static void DrawCIERGBTriangle()
+        {
+            double xR = 0.73474284, yR = 0.26525716, xG = 0.27377903, yG = 0.7174777, xB = 0.16655563, yB = 0.00891073;
+            xR = xR * 400 + margin;
+            yR = BezierBitmap.Height - (yR * 400) - margin;
+
+            xG = xG * 400 + margin;
+            yG = BezierBitmap.Height - (yG * 400) - margin;
+
+            xB = xB * 400 + 30;
+            yB = BezierBitmap.Height - (yB * 400) - 30;
+
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xR, (int)yR), new Point((int)xG, (int)yG));
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xR, (int)yR), new Point((int)xB, (int)yB));
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xG, (int)yG), new Point((int)xB, (int)yB));
+        }
+        public static void DrawWideGamutTriangle()
+        {
+            double xR = 0.7347, yR = 0.2653, xG = 0.1152, yG = 0.8264, xB = 0.1566, yB = 0.0177;
+            xR = xR * 400 + margin;
+            yR = BezierBitmap.Height - (yR * 400) - margin;
+
+            xG = xG * 400 + margin;
+            yG = BezierBitmap.Height - (yG * 400) - margin;
+
+            xB = xB * 400 + 30;
+            yB = BezierBitmap.Height - (yB * 400) - 30;
+
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xR, (int)yR), new Point((int)xG, (int)yG));
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xR, (int)yR), new Point((int)xB, (int)yB));
+            gC.DrawLine(new Pen(Brushes.Black), new Point((int)xG, (int)yG), new Point((int)xB, (int)yB));
         }
         #endregion
     }

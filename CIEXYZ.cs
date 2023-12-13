@@ -21,6 +21,7 @@ namespace Chromaticity
             Logic.Init();
 
             //ColorPointsCheckBox.Checked = true;
+            SRGBRadioButton.Checked = true;
         }
 
         private void BezierPictureBox_MouseDown(object sender, MouseEventArgs e)
@@ -73,6 +74,41 @@ namespace Chromaticity
             {
                 Logic.IsColorPoints = false;
                 Logic.DrawC();
+            }
+        }
+
+        private void SRGBRadioButton_CheckedChanged(object sender, EventArgs e)
+        {
+            if (SRGBRadioButton.Checked)
+            {
+                Logic.colorModel = ColorModel.sRGB;
+                //Logic.DrawControlPoints();
+                //Logic.DrawBezierCurve();
+                //Logic.ComputeXYZandConvert();
+                Logic.ComputeXYZandConvert();
+            }
+        }
+
+        private void WhiteGammutRadioButton_CheckedChanged(object sender, EventArgs e)
+        {
+            if (WhiteGammutRadioButton.Checked)
+            {
+                Logic.colorModel = ColorModel.WideGamut;
+                //Logic.DrawControlPoints();
+                //Logic.DrawBezierCurve();
+                Logic.ComputeXYZandConvert();
+            }
+        }
+
+        private void CRGBRadioButton_CheckedChanged(object sender, EventArgs e)
+        {
+            if (CRGBRadioButton.Checked)
+            {
+                Logic.colorModel = ColorModel.CIERGB;
+                //Logic.DrawControlPoints();
+                //Logic.DrawBezierCurve();
+                //Logic.ComputeXYZandConvert();
+                Logic.ComputeXYZandConvert();
             }
         }
     }
