@@ -45,9 +45,14 @@ namespace Chromaticity
                 // draw new control points
                 Logic.DrawControlPoints();
                 //calculate bezier curve
+                for(int t = 0; t<401; t++)
+                {
+                    Logic.TEMPCurveYLocations[t] = Logic.CurveYLocations[t];
+                }
                 Logic.DrawBezierCurve();
-                //calculate color
                 Logic.ComputeXYZandConvert();
+                //calculate color
+                //Logic.ComputeXYZandConvert();
             }
         }
 

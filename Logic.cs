@@ -21,11 +21,13 @@ namespace Chromaticity
         public static double[,] waves;
         public static PointF[] ControlPoints; // 5
         public static PointF[] CurveYLocations;
+        public static PointF[] TEMPCurveYLocations;
         public static (Point, Color)[] ChromaticBoundary;
 
         public static int CurrentPoint = -1;
         public static bool IsPointMove = false;
         public static bool IsColorPoints = false;
+        public static bool alert = false;
         public static int margin = 30;
         public static float k = 0;
 
@@ -34,6 +36,7 @@ namespace Chromaticity
         {
             ChromaticBoundary = new (Point, Color)[401];
             CurveYLocations = new PointF[401];
+            TEMPCurveYLocations = new PointF[401];
             ControlPoints = new PointF[5];
             ControlPoints[0] = new PointF(0f, 0.5f);
             ControlPoints[1] = new PointF(0.25f, 0.5f);
@@ -41,28 +44,16 @@ namespace Chromaticity
             ControlPoints[3] = new PointF(0.75f, 0.5f);
             ControlPoints[4] = new PointF(1f, 0.5f);
 
-            //Image j = Image.FromFile("C:/Users/user/Desktop/sem5/GrafikaKomputerowa/Chromaticity/Chromaticity/hziJw.png");
             ChromaticBitmap = new DirectBitmap(ChromaticPic.Width, ChromaticPic.Height);
             BezierBitmap = new DirectBitmap(BezierPic.Width, BezierPic.Height);
-            //ChromaticBitmap = new DirectBitmap(ChromaticPic.Width, ChromaticPic.Height);
 
             gC = Graphics.FromImage(ChromaticBitmap.Bitmap);
             ChromaticPic.Image = ChromaticBitmap.Bitmap;
-            //gC = ChromaticPic.CreateGraphics();
             gB = Graphics.FromImage(BezierBitmap.Bitmap);
             BezierPic.Image = BezierBitmap.Bitmap;
-            //gB = BezierPic.CreateGraphics();
             ReadFromTXT();
 
-            //gC.Clear(Color.White);
-            //Bitmap backgroundBitmap = new(new Bitmap(@"C:\Users\user\Desktop\sem5\GrafikaKomputerowa\Chromaticity\Chromaticity\hziJw.png"),
-            //        (int)(0.9 * ChromaticPic.Width - margin),
-            //        (int)(0.9 * ChromaticPic.Width - margin));
-            //gC.DrawImage(backgroundBitmap, new Point(margin-10, ChromaticPic.Height - backgroundBitmap.Height - margin));
-
             CalculateChromaticBoundary();
-            //DrawChromaticBoundary();
-            //DrawAxes();
             DrawC();
 
             DrawControlPoints();
@@ -71,7 +62,7 @@ namespace Chromaticity
         public static void ReadFromTXT()
         {
             // TODO
-            string filePath = "C:/Users/user/Desktop/sem5/GrafikaKomputerowa/Chromaticity/Chromaticity/color_matching_functions.txt";
+            string filePath = @"..\..\..\color_matching_functions.txt";
             waves = new double[401, 4];
             int index = 0;
 
@@ -99,6 +90,7 @@ namespace Chromaticity
                         index++;
                     }
                 }
+                k = 1 / k;
             }
             else
             {
@@ -125,30 +117,12 @@ namespace Chromaticity
                     y = Y / (X + Y + Z);
                 }
 
-                //if (Y != 0)
-                //{
-                //    X = X / Y;
-                //    Y = Y / Y;
-                //    Z = Z / Y;
-                //}
-
                 int R = Math.Min((int)(255*Math.Pow(Math.Max(3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z, 0), 1/2.2)), 255);
                 int G = Math.Min((int)(255*Math.Pow(Math.Max(-0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z, 0), 1/2.2)), 255);
                 int B = Math.Min((int)(255*Math.Pow(Math.Max(0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z, 0), 1/2.2)), 255);
 
-
-                //R = adj(R);
-                //G = adj(G);
-                //B = adj(B);
-
-                
-                //Color color = Color.Black;
-                //if (x < 0 || y <= 0) continue;
                 Color color = Color.FromArgb(R, G, B);
-                //gC.FillEllipse(new SolidBrush(color), (int)(x * ChromaticBitmap.Width) + margin-4, (int)(ChromaticBitmap.Height - (y * ChromaticBitmap.Height)) - margin - 4, 8, 8);
                 ChromaticBoundary[i] = (new Point((int)(x * ChromaticBitmap.Width) + margin, (int)(ChromaticBitmap.Height - (y * ChromaticBitmap.Height)) - margin), color);
-                //ChromaticBitmap.SetPixel((int)(x * ChromaticBitmap.Width)+30, (int)(ChromaticBitmap.Height - (y * ChromaticBitmap.Height))-30, color);
-                //ChromaticPic.Refresh();
             }
         }
         public static void DrawChromaticBoundary()
@@ -162,42 +136,20 @@ namespace Chromaticity
                 ChromaticPic.Refresh();
             }
         }
-        public static double adj(double C)
-        {
-            if (C < 0.0031308)
-            {
-                return 12.92 * C;
-            }
-            return 1.055 * Math.Pow(C, 0.41666) - 0.055;
-        }
-        public static float adj(float C)
-        {
-            if (C < 0.0031308)
-            {
-                return 12.92f * C;
-            }
-            return 1.055f * (float)Math.Pow(C, 0.41666) - 0.055f;
-        }
         public static void DrawAxes()
         {
             Font customFont = new Font("Arial", 6);
             using (Graphics g = Graphics.FromImage(BezierBitmap.Bitmap))
             {
-                // Clear the bitmap
                 g.Clear(Color.White);
 
-                // Set up the coordinate transformation
                 float xScale = 400 / (780f - 380f);
                 float yScale = 400 / (1.8f);
 
-                // Draw X-axis
                 g.DrawLine(Pens.Black, 30, BezierBitmap.Bitmap.Height-30, 780 * xScale, BezierBitmap.Bitmap.Height-30);
-                //DrawArrow(g, Pens.Black, new Point(30, BezierBitmap.Height-30), new Point(780, BezierBitmap.Height-30), 15);
 
-                // Draw Y-axis
                 g.DrawLine(Pens.Black, 30, 0, 30, BezierBitmap.Bitmap.Height-30);
-                //DrawArrow(g, Pens.Black, new Point(30, 0), new Point(30, (int)(1.8f * yScale)), 15);
-                // Draw tick marks and labels on X-axis
+
                 for (int x = 380; x <= 780; x += 50)
                 {
                     int xPos = (int)((x-320));
@@ -205,7 +157,6 @@ namespace Chromaticity
                     g.DrawString(x.ToString(), customFont, Brushes.Black, xPos - 45, BezierBitmap.Bitmap.Height - 20);
                 }
 
-                // Draw tick marks and labels on Y-axis
                 for (float y = 0; y <= 1.9f; y += 0.2f)
                 {
                     int yPos = BezierBitmap.Bitmap.Height - (int)(y * yScale)-30;
@@ -215,21 +166,13 @@ namespace Chromaticity
             }
             using (Graphics g = Graphics.FromImage(ChromaticBitmap.Bitmap))
             {
-                // Clear the bitmap
-                //g.Clear(Color.White);
-
-                // Set up the coordinate transformation
                 float xScale = 400 / 0.8f;
                 float yScale = 400 / 0.8f;
 
-                // Draw X-axis
                 g.DrawLine(Pens.Black, 30, BezierBitmap.Bitmap.Height - 30, 780 * xScale, BezierBitmap.Bitmap.Height - 30);
-                //DrawArrow(g, Pens.Black, new Point(30, BezierBitmap.Height-30), new Point(780, BezierBitmap.Height-30), 15);
 
-                // Draw Y-axis
                 g.DrawLine(Pens.Black, 30, 0, 30, BezierBitmap.Bitmap.Height - 30);
-                //DrawArrow(g, Pens.Black, new Point(30, 0), new Point(30, (int)(1.8f * yScale)), 15);
-                // Draw tick marks and labels on X-axis
+
                 for (float x = 0; x <= 0.9f; x += 0.1f)
                 {
                     int xPos = (int)((x * xScale)) + 60;
@@ -237,7 +180,6 @@ namespace Chromaticity
                     g.DrawString(x.ToString("0.0"), customFont, Brushes.Black, xPos - 45, BezierBitmap.Bitmap.Height - 20);
                 }
 
-                // Draw tick marks and labels on Y-axis
                 for (float y = 0; y <= 0.9f; y += 0.1f)
                 {
                     int yPos = BezierBitmap.Bitmap.Height - (int)(y * yScale) - 30;
@@ -275,15 +217,18 @@ namespace Chromaticity
         }
         public static void MoveControlPoint(Point newLocation)
         {
-            //PointF point = new PointF(ControlPoints[CurrentPoint].X, ControlPoints[CurrentPoint].Y);
-            //point = new PointF(point.X * 400 + 30, BezierBitmap.Height - (point.Y * 400) - 30);
 
             float x = (float)(newLocation.X - 30) / 400f;
             float y = (float)(BezierBitmap.Height - 30 - newLocation.Y) / 400f;
-            if(CurrentPoint == 0)
+            if (CurrentPoint == 0)
             {
                 if (x < 0 || x > (5f / 40f))
                 {
+                    if (y < 0 || y > 1)
+                    {
+                        ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, ControlPoints[CurrentPoint].Y);
+                        return;
+                    }
                     ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
                     return;
                 }
@@ -294,10 +239,15 @@ namespace Chromaticity
                 }
                 ControlPoints[CurrentPoint] = new PointF(x, y);
             }
-            if(CurrentPoint == 1)
+            if (CurrentPoint == 1)
             {
                 if (x < (51f / 400f) || x > (150f / 400f))
                 {
+                    if (y < 0 || y > 1)
+                    {
+                        ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, ControlPoints[CurrentPoint].Y);
+                        return;
+                    }
                     ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
                     return;
                 }
@@ -308,10 +258,15 @@ namespace Chromaticity
                 }
                 ControlPoints[CurrentPoint] = new PointF(x, y);
             }
-            if(CurrentPoint == 2)
+            if (CurrentPoint == 2)
             {
                 if (x < (151f / 400f) || x > (250f / 400f))
                 {
+                    if (y < 0 || y > 1)
+                    {
+                        ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, ControlPoints[CurrentPoint].Y);
+                        return;
+                    }
                     ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
                     return;
                 }
@@ -326,6 +281,11 @@ namespace Chromaticity
             {
                 if (x < (251f / 400f) || x > (350f / 400f))
                 {
+                    if (y < 0 || y > 1)
+                    {
+                        ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, ControlPoints[CurrentPoint].Y);
+                        return;
+                    }
                     ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
                     return;
                 }
@@ -340,6 +300,11 @@ namespace Chromaticity
             {
                 if (x < (351f / 400f) || x > 1)
                 {
+                    if (y < 0 || y > 1)
+                    {
+                        ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, ControlPoints[CurrentPoint].Y);
+                        return;
+                    }
                     ControlPoints[CurrentPoint] = new PointF(ControlPoints[CurrentPoint].X, y);
                     return;
                 }
@@ -361,18 +326,26 @@ namespace Chromaticity
                 r *= ntemp--;
                 r /= d;
             }
-            //if(n-i<0)
-            //{
-            //    if (1 - t == 0) return 0;
-            //    return r * Math.Pow(t, i) * (1 / Math.Pow(1 - t, i - n));
-            //}
             return r * Math.Pow(t, i) * Math.Pow(1 - t, n - i);
         }
 
         public static void DrawBezierCurve()
         {
+            
             for(int t = 0; t<401; t++)
             {
+                //if(alert)
+                //{
+                //    for(int i = 0; i<401; i++)
+                //    {
+                //        CurveYLocations[i] = TEMPCurveYLocations[i];
+                //        PointF p = TEMPCurveYLocations[i];
+                //        BezierBitmap.SetPixel((int)(p.X * 400) + 30, BezierBitmap.Height - (int)(p.Y * 400) - 30, Color.Black);
+                //        alert = false;
+                //        BezierPic.Refresh();
+                //        return;
+                //    }
+                //}
                 float T = (float)t / 400;
                 float sumX = 0f;
                 float sumY = 0f;
@@ -384,8 +357,17 @@ namespace Chromaticity
                 }
                 PointF newBPoint = new PointF(sumX, sumY);
                 // sumX, sumY are in 0-1
+
+                // y is greater then 1 or less then 0
+                //if (sumY < 0 || sumY > 1)
+                //{
+                //    alert = true;
+                //}
                 CurveYLocations[t] = newBPoint;
-                // !! wywala sie
+                //if ((int)(sumX * 400) + 30 < 0 || (int)(sumX * 400) + 30 > 400) return;
+                //if (BezierBitmap.Height - (int)(sumY * 400) - 30 < 0 || BezierBitmap.Height - (int)(sumY * 400) - 30 > 400) return;
+                //if ((int)(sumX * 400) + 30 < 0 || BezierBitmap.Height - (int)(sumY * 400) - 30 < 0) continue;
+                //if ((int)(sumX * 400) + 30 >= 500 || BezierBitmap.Height - (int)(sumY * 400) - 30 >= 500) continue;
                 BezierBitmap.SetPixel((int)(sumX * 400)+30, BezierBitmap.Height - (int)(sumY * 400)-30, Color.Black);
             }
             BezierPic.Refresh();
@@ -398,29 +380,20 @@ namespace Chromaticity
             for (int i = 0; i < 401; i++)
             {
                 PointF point = CurveYLocations[i];
-                // converting to 0-1.8
                 float lambdaP = point.Y * 1.8f;
                 float lambda = point.X;
-                X += lambdaP * (float)waves[i, 1] * lambda;
-                Y += lambdaP * (float)waves[i, 2] * lambda;
-                Z += lambdaP * (float)waves[i, 3] * lambda;
+                X += lambdaP * (float)waves[i, 1];
+                Y += lambdaP * (float)waves[i, 2];
+                Z += lambdaP * (float)waves[i, 3];
             }
 
-            //X *= k;
-            //Y *= k;
-            //Z *= k;
+            X *= k;
+            Y *= k;
+            Z *= k;
 
             int R = Math.Min((int)(255 * Math.Pow(Math.Max(3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z, 0), 1 / 2.2)), 255);
             int G = Math.Min((int)(255 * Math.Pow(Math.Max(-0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z, 0), 1 / 2.2)), 255);
             int B = Math.Min((int)(255 * Math.Pow(Math.Max(0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z, 0), 1 / 2.2)), 255);
-
-            //double R = 3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z;
-            //double G = -0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z;
-            //double B = 0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z;
-
-            //R = adj(R);
-            //G = adj(G);
-            //B = adj(B);
 
             Color color = Color.FromArgb(R, G, B);
             PutPoint(X, Y, Z);
@@ -455,7 +428,7 @@ namespace Chromaticity
         public static void DrawC()
         {
             gC.Clear(Color.White);
-            Bitmap backgroundBitmap = new(new Bitmap(@"C:\Users\user\Desktop\sem5\GrafikaKomputerowa\Chromaticity\Chromaticity\hziJw.png"),
+            Bitmap backgroundBitmap = new(new Bitmap(@"..\..\..\hziJw.png"),
                     (int)(0.9 * ChromaticPic.Width - margin),
                     (int)(0.9 * ChromaticPic.Width - margin));
             gC.DrawImage(backgroundBitmap, new Point(margin - 10, ChromaticPic.Height - backgroundBitmap.Height - margin));
